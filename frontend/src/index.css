@@ -1,0 +1,159 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-family);
+  background:
+    radial-gradient(circle at top, #ffffff 0%, #f8fafc 40%, #eef2f7 100%);
+  color: #1f2937;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-menubar {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.app-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.app-userbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-userbox__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+.app-userbox__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.app-userbox__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.app-content {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1rem 0 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-subtitle {
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.dashboard-card {
+  border: 1px solid #e2e8f0;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem;
+}
+
+.login-card {
+  width: min(100%, 26rem);
+}
+
+.empty-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.empty-panel__icon {
+  font-size: 1.5rem;
+  color: #0ea5e9;
+}
+
+.empty-panel__title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.empty-panel__text {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.p-card {
+  border-radius: 14px;
+}
+
+.p-dialog {
+  margin: 1rem;
+}
+
+.p-datatable .p-datatable-header,
+.p-datatable .p-paginator {
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .app-menubar {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .app-content {
+    width: calc(100% - 1rem);
+    padding-top: 0.75rem;
+  }
+
+  .app-userbox__meta {
+    display: none;
+  }
+
+  .page-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .p-button-label {
+    white-space: nowrap;
+  }
+}
