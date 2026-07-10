@@ -53,6 +53,7 @@ public class AlumnoController {
     @Transactional
     public ResponseEntity<AlumnoDTO> crear(@Valid @RequestBody AlumnoDTO dto) {
         Alumno alumno = toEntity(dto, new Alumno());
+        alumno.setActivo(true);
         return ResponseEntity.ok(toDTO(alumnoRepository.save(alumno)));
     }
 

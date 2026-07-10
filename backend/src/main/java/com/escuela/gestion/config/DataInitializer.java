@@ -5,6 +5,7 @@ import com.escuela.gestion.models.Rol.NombreRol;
 import com.escuela.gestion.models.Usuario;
 import com.escuela.gestion.repositories.RolRepository;
 import com.escuela.gestion.repositories.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,12 @@ public class DataInitializer implements CommandLineRunner {
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.email}")
+    private String adminEmail;
+
+    @Value("${app.admin.password}")
+    private String adminPassword;
 
     public DataInitializer(RolRepository rolRepository, UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.rolRepository = rolRepository;
@@ -44,12 +51,12 @@ public class DataInitializer implements CommandLineRunner {
             Rol rolDueno = rolRepository.findByNombre(NombreRol.ROLE_DUENO).orElseThrow();
             Usuario dueno = new Usuario();
             dueno.setNombre("Administrador");
-            dueno.setEmail("admin@escuela.com");
-            dueno.setPassword(passwordEncoder.encode("admin123"));
+            dueno.setEmail(adminEmail);
+            dueno.setPassword(passwordEncoder.encode(adminPassword));
             dueno.setActivo(true);
             dueno.setRoles(Set.of(rolDueno));
             usuarioRepository.save(dueno);
-            log.info("Usuario admin creado: admin@escuela.com / admin123");
+            log.info("Usuario admin creado: " + adminEmail);
         }
     }
 }

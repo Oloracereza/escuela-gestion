@@ -15,7 +15,7 @@ INSERT IGNORE INTO roles (nombre) VALUES
 -- Usuario administrador (contraseña: admin123)
 INSERT IGNORE INTO usuarios (nombre, email, password) VALUES
   ('Administrador', 'admin@escuela.com',
-   '$2a$10$7QJ8Qz1u6v5k3M9X2WnOzO8YkLpRmN4sDfGhJtPwVbCxAeKiUsY6');
+   '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG');
 
 -- Asignar rol dueño al admin
 INSERT IGNORE INTO usuario_roles (usuario_id, rol_id)

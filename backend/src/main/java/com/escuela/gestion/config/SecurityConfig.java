@@ -57,16 +57,28 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        // Aceptar localhost y 127.0.0.1 en todos los puertos que puede usar Vite
-        config.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "http://localhost:3001",
-            "http://localhost:3002",
-            "http://localhost:5173",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:3001",
-            "http://127.0.0.1:3002",
-            "http://127.0.0.1:5173"
+        // Permite usar el frontend desde esta PC y desde otros equipos en la red local.
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "http://192.168.*:*",
+            "http://10.*:*",
+            "http://172.16.*:*",
+            "http://172.17.*:*",
+            "http://172.18.*:*",
+            "http://172.19.*:*",
+            "http://172.20.*:*",
+            "http://172.21.*:*",
+            "http://172.22.*:*",
+            "http://172.23.*:*",
+            "http://172.24.*:*",
+            "http://172.25.*:*",
+            "http://172.26.*:*",
+            "http://172.27.*:*",
+            "http://172.28.*:*",
+            "http://172.29.*:*",
+            "http://172.30.*:*",
+            "http://172.31.*:*"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));

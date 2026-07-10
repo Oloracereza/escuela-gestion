@@ -70,16 +70,20 @@ export default function RecordatoriosPage() {
     });
   };
 
-  const copiarTodos = () => {
-    const lista = pendientes
-      .map(a => `• ${a.nombre} ${a.apellido} (${a.grupoNombre || 'Sin grupo'})`)
-      .join('\n');
-    const texto = `Alumnos con pago pendiente — ${mesActual()}:\n${lista}`;
-    navigator.clipboard.writeText(texto).then(() => {
+  const textoRecordatorio = pendientes.length > 0
+    ? `Recordatorio de pago — ${mesActual()}\n` +
+      `Por favor revisen a los siguientes alumnos con pago pendiente y notifiquen a sus tutores:\n\n` +
+      pendientes
+        .map(a => `• ${a.nombre} ${a.apellido} ${a.grupoNombre ? `(${a.grupoNombre})` : ''}`)
+        .join('\n')
+    : `Todos los alumnos están al corriente con el pago de ${mesActual()}.`;
+
+  const copiarTextoCompleto = () => {
+    navigator.clipboard.writeText(textoRecordatorio).then(() => {
       toast.current.show({
         severity: 'success',
-        summary:  'Lista copiada',
-        detail:   `${pendientes.length} alumnos copiados al portapapeles`,
+        summary:  'Texto copiado',
+        detail:   `${pendientes.length} alumnos pendientes copiados al portapapeles`,
         life:     2500,
       });
     });
@@ -97,11 +101,11 @@ export default function RecordatoriosPage() {
           <span className="text-sm text-color-secondary font-medium">{mesActual()}</span>
           {pendientes.length > 0 && (
             <Button
-              label="Copiar lista completa"
+              label="Copiar texto para chat"
               icon="pi pi-copy"
               severity="secondary"
               outlined
-              onClick={copiarTodos}
+              onClick={copiarTextoCompleto}
             />
           )}
         </div>
@@ -132,6 +136,23 @@ export default function RecordatoriosPage() {
       </div>
 
       {/* Lista de pendientes */}
+      <Card className="mb-3">
+        <div className="flex flex-column gap-3">
+          <div className="font-semibold">Texto para chat grupal</div>
+          <textarea
+            className="w-full p-3 border-1 border-300 surface-border surface-card rounded-md"
+            rows={8}
+            readOnly
+            value={textoRecordatorio}
+          />
+          <Button
+            label="Copiar texto para chat"
+            icon="pi pi-copy"
+            severity="secondary"
+            onClick={copiarTextoCompleto}
+          />
+        </div>
+      </Card>
       {pendientes.length === 0 && !loading ? (
         <Card>
           <div className="text-center py-5">

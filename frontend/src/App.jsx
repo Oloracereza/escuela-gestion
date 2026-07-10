@@ -25,9 +25,15 @@ export default function App() {
               <Route path="/"               element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard"      element={<DashboardPage />} />
               <Route path="/alumnos"        element={<AlumnosPage />} />
+            </Route>
+            <Route element={<PrivateRoute roles={['ROLE_DUENO', 'ROLE_ENTRENADOR']} />}>
               <Route path="/asistencia"     element={<AsistenciaPage />} />
+            </Route>
+            <Route element={<PrivateRoute roles={['ROLE_DUENO', 'ROLE_SECRETARIA']} />}>
               <Route path="/pagos"          element={<PagosPage />} />
               <Route path="/recordatorios"  element={<RecordatoriosPage />} />
+            </Route>
+            <Route element={<PrivateRoute roles={['ROLE_DUENO']} />}>
               <Route path="/usuarios"       element={<UsuariosPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -31,7 +31,7 @@ timeout /T 30 /NOBREAK >NUL
 
 :: ---------- Frontend ----------
 echo [3/3] Iniciando Frontend (React)...
-start "Frontend - Vite" /D "C:\Users\Lauro Valdez\Documents\escuela-gestion\frontend" cmd /k "npm run dev"
+start "Frontend - Vite" /D "C:\Users\Lauro Valdez\Documents\escuela-gestion\frontend" cmd /k "npm run dev -- --host 0.0.0.0"
 timeout /T 8 /NOBREAK >NUL
 
 :: ---------- Abrir navegador ----------
@@ -39,9 +39,12 @@ echo.
 echo ============================================
 echo   Todo listo. Abriendo navegador...
 echo   URL: http://localhost:3000
-echo   Usuario: admin@escuela.com
-
-echo   Password: admin123
+echo   En otra computadora de la misma red: http://IP-DE-ESTA-PC:3000
+echo   API directa en red local: http://IP-DE-ESTA-PC:8080/api
+echo   Usuario admin por defecto (solo desarrollo local):
+echo   Ver/editar en backend\src\main\resources\application.properties
+echo   (app.admin.email / app.admin.password, o variables de entorno
+echo    ADMIN_EMAIL / ADMIN_PASSWORD)
 echo ============================================
 echo.
 start "" http://localhost:3000

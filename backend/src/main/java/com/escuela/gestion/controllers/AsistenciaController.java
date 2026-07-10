@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,8 +37,14 @@ public class AsistenciaController {
     @GetMapping("/fecha/{fecha}")
     public List<AsistenciaDTO> porFecha(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
-        return asistenciaRepository.findByFecha(fecha)
-                .stream().map(this::toDTO).collect(Collectors.toList());
+        Map<Long, Asistencia> asistenciasPorAlumno = asistenciaRepository.findByFecha(fecha)
+                .stream()
+                .collect(Collectors.toMap(a -> a.getAlumno().getId(), Function.identity()));
+
+        return alumnoRepository.findByActivoTrue()
+                .stream()
+                .map(alumno -> toDTO(asistenciasPorAlumno.get(alumno.getId()), alumno, fecha))
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/grupo/{grupoId}/fecha/{fecha}")
@@ -48,12 +57,15 @@ public class AsistenciaController {
 
     @PostMapping
     public ResponseEntity<AsistenciaDTO> registrar(@Valid @RequestBody AsistenciaDTO dto) {
-        Asistencia a = new Asistencia();
-        alumnoRepository.findById(dto.getAlumnoId()).ifPresent(a::setAlumno);
-        a.setFecha(dto.getFecha());
-        a.setEstado(dto.getEstado());
-        a.setObservaciones(dto.getObservaciones());
-        return ResponseEntity.ok(toDTO(asistenciaRepository.save(a)));
+        return alumnoRepository.findById(dto.getAlumnoId()).map(alumno -> {
+            Optional<Asistencia> existente = asistenciaRepository.findByAlumnoIdAndFecha(dto.getAlumnoId(), dto.getFecha());
+            Asistencia a = existente.orElseGet(Asistencia::new);
+            a.setAlumno(alumno);
+            a.setFecha(dto.getFecha());
+            a.setEstado(dto.getEstado());
+            a.setObservaciones(dto.getObservaciones());
+            return ResponseEntity.ok(toDTO(asistenciaRepository.save(a)));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
@@ -66,14 +78,22 @@ public class AsistenciaController {
     }
 
     private AsistenciaDTO toDTO(Asistencia a) {
+        return toDTO(a, a.getAlumno(), a.getFecha());
+    }
+
+    private AsistenciaDTO toDTO(Asistencia a, com.escuela.gestion.models.Alumno alumno, LocalDate fecha) {
         AsistenciaDTO dto = new AsistenciaDTO();
-        dto.setId(a.getId());
-        dto.setFecha(a.getFecha());
-        dto.setEstado(a.getEstado());
-        dto.setObservaciones(a.getObservaciones());
-        if (a.getAlumno() != null) {
-            dto.setAlumnoId(a.getAlumno().getId());
-            dto.setAlumnoNombre(a.getAlumno().getNombre() + " " + a.getAlumno().getApellido());
+        if (a != null) {
+            dto.setId(a.getId());
+            dto.setEstado(a.getEstado());
+            dto.setObservaciones(a.getObservaciones());
+        } else {
+            dto.setEstado(Asistencia.EstadoAsistencia.AUSENTE);
+        }
+        dto.setFecha(fecha);
+        if (alumno != null) {
+            dto.setAlumnoId(alumno.getId());
+            dto.setAlumnoNombre(alumno.getNombre() + " " + alumno.getApellido());
         }
         return dto;
     }

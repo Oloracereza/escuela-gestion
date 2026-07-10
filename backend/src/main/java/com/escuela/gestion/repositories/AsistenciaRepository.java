@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
@@ -18,6 +19,8 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
     @Query("SELECT a FROM Asistencia a JOIN FETCH a.alumno WHERE a.alumno.grupo.id = :grupoId AND a.fecha = :fecha")
     List<Asistencia> findByAlumnoGrupoIdAndFecha(Long grupoId, LocalDate fecha);
+
+    Optional<Asistencia> findByAlumnoIdAndFecha(Long alumnoId, LocalDate fecha);
 
     boolean existsByAlumnoIdAndFecha(Long alumnoId, LocalDate fecha);
 }
