@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { asistenciaApi, alumnosApi } from '../services/api';
+import React, { useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
 import { ProgressBar } from 'primereact/progressbar';
-
-const CICLO = ['AUSENTE', 'PRESENTE', 'TARDANZA', 'JUSTIFICADO'];
+import {
+  CICLO_ESTADOS,
+  cargarAsistencia,
+  marcarAsistencia,
+  marcarTodosPresentes,
+  fechaCambiada,
+} from '../store/asistenciaSlice';
 
 const CFG = {
   PRESENTE:    { icon: 'pi pi-check',       bg: '#ECFDF5', border: '#10B981', color: '#065F46', label: 'P' },
@@ -17,108 +22,49 @@ const CFG = {
 const fmtISO = (d) => d.toISOString().split('T')[0];
 
 export default function AsistenciaPage() {
-  const [fecha,     setFecha]     = useState(new Date());
-  const [lista,     setLista]     = useState([]);
-  const [loading,   setLoading]   = useState(false);
-  const [guardando, setGuardando] = useState({});
+  const dispatch = useDispatch();
+  const { fecha, items, loading, guardando } = useSelector((state) => state.asistencia);
   const toast = useRef(null);
 
-  const cargar = async (fechaObj) => {
-    setLoading(true);
-    const iso = fmtISO(fechaObj);
-    try {
-      const [alumnosRes, asistRes] = await Promise.all([
-        alumnosApi.listar(),
-        asistenciaApi.porFecha(iso),
-      ]);
-      const asistMap = {};
-      asistRes.data.forEach(a => { asistMap[a.alumnoId] = a; });
-      setLista(
-        alumnosRes.data
-          .filter(a => a.activo)
-          .map(a => ({
-            alumno: a,
-            asistencia: asistMap[a.id] ?? { alumnoId: a.id, fecha: iso, estado: 'AUSENTE' },
-          }))
-      );
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error al cargar' });
-    } finally {
-      setLoading(false);
-    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { dispatch(cargarAsistencia(fecha)); }, []);
+
+  const onFechaChange = (fechaDate) => {
+    const iso = fmtISO(fechaDate);
+    dispatch(fechaCambiada(iso));
+    dispatch(cargarAsistencia(iso));
   };
 
-  useEffect(() => { cargar(fecha); }, []);
-
-  const tocar = async (item) => {
+  const tocar = (item) => {
     const alumnoId = item.alumno.id;
     if (guardando[alumnoId]) return;
 
     const estadoActual = item.asistencia?.estado ?? 'AUSENTE';
-    const idx = CICLO.indexOf(estadoActual);
-    const nuevoEstado = CICLO[(idx + 1) % CICLO.length];
+    const idx = CICLO_ESTADOS.indexOf(estadoActual);
+    const nuevoEstado = CICLO_ESTADOS[(idx + 1) % CICLO_ESTADOS.length];
 
-    // Actualizar UI de inmediato (optimistic)
-    setLista(prev => prev.map(it =>
-      it.alumno.id === alumnoId
-        ? { ...it, asistencia: { ...(it.asistencia ?? {}), estado: nuevoEstado, alumnoId } }
-        : it
-    ));
-    setGuardando(g => ({ ...g, [alumnoId]: true }));
-
-    try {
-      if (item.asistencia?.id) {
-        await asistenciaApi.actualizar(item.asistencia.id, {
-          alumnoId, fecha: fmtISO(fecha), estado: nuevoEstado,
-        });
-      } else {
-        const { data } = await asistenciaApi.registrar({
-          alumnoId, fecha: fmtISO(fecha), estado: nuevoEstado,
-        });
-        setLista(prev => prev.map(it =>
-          it.alumno.id === alumnoId ? { ...it, asistencia: data } : it
-        ));
-      }
-    } catch {
-      // Revertir si falló
-      setLista(prev => prev.map(it =>
-        it.alumno.id === alumnoId ? { ...it, asistencia: item.asistencia } : it
-      ));
-      toast.current?.show({ severity: 'error', summary: 'No se pudo guardar' });
-    } finally {
-      setGuardando(g => ({ ...g, [alumnoId]: false }));
-    }
+    dispatch(marcarAsistencia({
+      alumnoId,
+      asistenciaId: item.asistencia?.id,
+      fecha,
+      nuevoEstado,
+    }))
+      .unwrap()
+      .catch(() => toast.current?.show({ severity: 'error', summary: 'No se pudo guardar' }));
   };
 
-  // FIXED: marcar directamente a PRESENTE sin pasar por el ciclo
-  const marcarTodosPresentes = async () => {
-    setLoading(true);
-    const iso = fmtISO(fecha);
-    try {
-      await Promise.all(
-        lista.map(async (item) => {
-          if (item.asistencia?.estado === 'PRESENTE') return; // ya está
-          if (item.asistencia?.id) {
-            await asistenciaApi.actualizar(item.asistencia.id, {
-              alumnoId: item.alumno.id, fecha: iso, estado: 'PRESENTE',
-            });
-          } else {
-            await asistenciaApi.registrar({
-              alumnoId: item.alumno.id, fecha: iso, estado: 'PRESENTE',
-            });
-          }
-        })
-      );
-      await cargar(fecha);
-      toast.current?.show({ severity: 'success', summary: '¡Todos presentes!' });
-    } catch {
-      toast.current?.show({ severity: 'error', summary: 'Error al guardar' });
-      setLoading(false);
-    }
+  const handleMarcarTodosPresentes = () => {
+    dispatch(marcarTodosPresentes())
+      .unwrap()
+      .then(() => {
+        dispatch(cargarAsistencia(fecha));
+        toast.current?.show({ severity: 'success', summary: '¡Todos presentes!' });
+      })
+      .catch(() => toast.current?.show({ severity: 'error', summary: 'Error al guardar' }));
   };
 
-  const presentes = lista.filter(it => it.asistencia?.estado === 'PRESENTE').length;
-  const total     = lista.length;
+  const presentes = items.filter((it) => it.asistencia?.estado === 'PRESENTE').length;
+  const total     = items.length;
   const pct       = total > 0 ? Math.round((presentes / total) * 100) : 0;
 
   return (
@@ -129,8 +75,8 @@ export default function AsistenciaPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <h2 style={{ margin: 0, fontSize: 20 }}>Asistencia</h2>
         <Calendar
-          value={fecha}
-          onChange={(e) => { setFecha(e.value); cargar(e.value); }}
+          value={new Date(fecha)}
+          onChange={(e) => onFechaChange(e.value)}
           dateFormat="dd/mm/yy"
           showIcon
           style={{ width: 155 }}
@@ -172,7 +118,7 @@ export default function AsistenciaPage() {
           severity="success"
           outlined
           size="small"
-          onClick={marcarTodosPresentes}
+          onClick={handleMarcarTodosPresentes}
           disabled={loading || presentes === total}
         />
       </div>
@@ -182,13 +128,13 @@ export default function AsistenciaPage() {
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#9CA3AF' }}>
           <i className="pi pi-spin pi-spinner" style={{ fontSize: 24 }} />
         </div>
-      ) : lista.length === 0 ? (
+      ) : items.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#9CA3AF' }}>
           No hay alumnos activos
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {lista.map((item) => {
+          {items.map((item) => {
             const cfg     = CFG[item.asistencia?.estado] ?? CFG.AUSENTE;
             const spinner = guardando[item.alumno.id];
             const initials = `${item.alumno.nombre[0]}${item.alumno.apellido[0]}`;
@@ -205,7 +151,6 @@ export default function AsistenciaPage() {
                   cursor: 'pointer', userSelect: 'none',
                   WebkitTapHighlightColor: 'transparent',
                   transition: 'transform 0.1s, box-shadow 0.1s',
-                  // feedback visual al presionar
                   active: { transform: 'scale(0.98)' },
                 }}
                 onPointerDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
