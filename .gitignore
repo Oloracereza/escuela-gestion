@@ -17,3 +17,8 @@ backend/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Material de estudio personal (no publicar)
+docs/proyecto-explicado/
+docs/redux-toolkit-explicado/
+docs/bug-alumnos-explicado/
