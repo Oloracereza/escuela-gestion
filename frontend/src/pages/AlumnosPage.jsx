@@ -34,8 +34,9 @@ export default function AlumnosPage() {
       toast.current.show({ severity: 'success', summary: 'Guardado', detail: 'Alumno guardado correctamente' });
       setDialog(false);
       cargar();
-    } catch {
-      toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el alumno' });
+    } catch (err) {
+      const detalle = err.response?.data?.message || 'No se pudo guardar el alumno';
+      toast.current.show({ severity: 'error', summary: 'Error', detail: detalle });
     }
   };
 

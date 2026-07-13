@@ -98,7 +98,12 @@ public class AlumnoController {
     private Alumno toEntity(AlumnoDTO dto, Alumno alumno) {
         alumno.setNombre(dto.getNombre());
         alumno.setApellido(dto.getApellido());
-        alumno.setEmail(dto.getEmail());
+        // El email es opcional pero tiene un UNIQUE en la base de datos.
+        // Si se guarda como "" (string vacío) en vez de null, el SEGUNDO
+        // alumno sin correo choca contra el primero: "" no puede repetirse,
+        // pero la base de datos sí permite muchos null.
+        String email = dto.getEmail();
+        alumno.setEmail((email == null || email.isBlank()) ? null : email);
         alumno.setTelefono(dto.getTelefono());
         alumno.setFechaInscripcion(dto.getFechaInscripcion());
         alumno.setActivo(dto.isActivo());

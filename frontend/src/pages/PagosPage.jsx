@@ -56,8 +56,9 @@ export default function PagosPage() {
       toast.current.show({ severity: 'success', summary: 'Pago registrado' });
       setDialog(false);
       cargar();
-    } catch {
-      toast.current.show({ severity: 'error', summary: 'Error al guardar pago' });
+    } catch (err) {
+      const detalle = err.response?.data?.message || 'Error al guardar pago';
+      toast.current.show({ severity: 'error', summary: 'Error', detail: detalle });
     }
   };
 

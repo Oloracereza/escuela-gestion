@@ -63,17 +63,22 @@ public class PagoController {
     @PostMapping
     @Transactional
     public ResponseEntity<PagoDTO> registrar(@Valid @RequestBody PagoDTO dto, Authentication auth) {
-        Pago pago = new Pago();
-        alumnoRepository.findById(dto.getAlumnoId()).ifPresent(pago::setAlumno);
-        pago.setMonto(dto.getMonto());
-        pago.setFechaPago(dto.getFechaPago());
-        pago.setMesCorrespondiente(dto.getMesCorrespondiente());
-        pago.setMetodoPago(dto.getMetodoPago());
-        pago.setConcepto(dto.getConcepto());
-        if (auth != null) {
-            usuarioRepository.findByEmail(auth.getName()).ifPresent(pago::setRegistradoPor);
-        }
-        return ResponseEntity.ok(toDTO(pagoRepository.save(pago)));
+        // alumno_id es NOT NULL en la base de datos. Antes, un alumnoId inexistente
+        // se ignoraba en silencio (ifPresent) y el guardado fallaba después con un
+        // error de base de datos confuso, en vez de un 404 claro aquí mismo.
+        return alumnoRepository.findById(dto.getAlumnoId()).map(alumno -> {
+            Pago pago = new Pago();
+            pago.setAlumno(alumno);
+            pago.setMonto(dto.getMonto());
+            pago.setFechaPago(dto.getFechaPago());
+            pago.setMesCorrespondiente(dto.getMesCorrespondiente());
+            pago.setMetodoPago(dto.getMetodoPago());
+            pago.setConcepto(dto.getConcepto());
+            if (auth != null) {
+                usuarioRepository.findByEmail(auth.getName()).ifPresent(pago::setRegistradoPor);
+            }
+            return ResponseEntity.ok(toDTO(pagoRepository.save(pago)));
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
